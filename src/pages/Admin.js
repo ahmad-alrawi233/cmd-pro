@@ -12,7 +12,7 @@ import {
   orderBy,
 } from "firebase/firestore";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = "https://cmd-backend-v7zo.onrender.com";
 
 export default function Admin() {
   const [services, setServices] = useState([]);
