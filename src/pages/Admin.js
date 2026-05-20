@@ -72,12 +72,18 @@ export default function Admin() {
     const formData = new FormData();
     formData.append("image", file);
 
-    const res = await fetch('${BACKEND_URL}/upload', {
+    const res = await fetch(${BACKEND_URL}/upload, {
       method: "POST",
       body: formData,
     });
 
-    return await res.json();
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.details || data.error || "Upload failed");
+    }
+
+    return data;
   };
 
   const uploadMainProjectImage = async (file) => {
@@ -87,14 +93,10 @@ export default function Admin() {
 
     try {
       const data = await uploadToBackend(file);
-      if (data.imageUrl) {
-        setProjectImage(data.imageUrl);
-        alert("تم رفع الصورة الرئيسية");
-      } else {
-        alert(data.details || data.error || "فشل رفع الصورة");
-      }
-    } catch {
-      alert("فشل الاتصال مع السيرفر");
+      setProjectImage(data.imageUrl);
+      alert("تم رفع الصورة الرئيسية");
+    } catch (error) {
+      alert(error.message || "فشل رفع الصورة الرئيسية");
     }
 
     setUploading(false);
@@ -110,13 +112,13 @@ export default function Admin() {
 
       for (const file of files) {
         const data = await uploadToBackend(file);
-        if (data.imageUrl) uploaded.push(data.imageUrl);
+        uploaded.push(data.imageUrl);
       }
 
       setProjectImages((prev) => [...prev, ...uploaded]);
       alert("تم رفع الصور الإضافية");
-    } catch {
-      alert("فشل رفع الصور الإضافية");
+    } catch (error) {
+      alert(error.message || "فشل رفع الصور الإضافية");
     }
 
     setUploading(false);
@@ -129,14 +131,10 @@ export default function Admin() {
 
     try {
       const data = await uploadToBackend(file);
-      if (data.imageUrl) {
-        setServiceIcon(data.imageUrl);
-        alert("تم رفع أيقونة الخدمة");
-      } else {
-        alert(data.details || data.error || "فشل رفع الأيقونة");
-      }
-    } catch {
-      alert("فشل الاتصال مع السيرفر");
+      setServiceIcon(data.imageUrl);
+      alert("تم رفع أيقونة الخدمة");
+    } catch (error) {
+      alert(error.message || "فشل رفع الأيقونة");
     }
 
     setServiceUploading(false);
