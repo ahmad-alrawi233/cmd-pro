@@ -77,10 +77,22 @@ export default function Admin() {
       body: formData,
     });
 
-    const data = await res.json();
+    const text = await res.text();
+
+    let data = {};
+
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (err) {
+      throw new Error("السيرفر رجع رد غير صحيح");
+    }
 
     if (!res.ok) {
-      throw new Error(data.details || data.error || "Upload failed");
+      throw new Error(data.details || data.error || "فشل رفع الصورة");
+    }
+
+    if (!data.imageUrl) {
+      throw new Error("لم يرجع رابط الصورة من السيرفر");
     }
 
     return data;
