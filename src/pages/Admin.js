@@ -72,7 +72,7 @@ export default function Admin() {
     const formData = new FormData();
     formData.append("image", file);
 
-    const res = await fetch(${BACKEND_URL}/upload, {
+    const res = await fetch('${BACKEND_URL}/upload', {
       method: "POST",
       body: formData,
     });
