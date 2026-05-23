@@ -12,8 +12,8 @@ import {
   orderBy,
 } from "firebase/firestore";
 
-const CLOUD_NAME = "dkuvjee2o";
-const UPLOAD_PRESET = "cmd_upload";
+const CLOUDINARY_CLOUD_NAME = "dkuvjee2o";
+const CLOUDINARY_UPLOAD_PRESET = "cmd_upload";
 
 export default function Admin() {
   const [services, setServices] = useState([]);
@@ -70,14 +70,14 @@ export default function Admin() {
   }, []);
 
   const uploadToCloudinary = async (file) => {
-    const formData = new FormData();
+    if (!file) throw new Error("لم يتم اختيار صورة");
 
+    const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", UPLOAD_PRESET);
-    formData.append("folder", "cmd-projects");
+    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
     const res = await fetch(
-      'https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload',
+      'https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload',
       {
         method: "POST",
         body: formData,
@@ -87,66 +87,64 @@ export default function Admin() {
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.error?.message || "فشل رفع الصورة");
+      throw new Error(data?.error?.message || "فشل رفع الصورة إلى Cloudinary");
     }
 
-    return {
-      imageUrl: data.secure_url,
-    };
+    if (!data.secure_url) {
+      throw new Error("لم يرجع رابط الصورة من Cloudinary");
+    }
+
+    return data.secure_url;
   };
 
   const uploadMainProjectImage = async (file) => {
-    if (!file) return alert("اختر صورة أولًا");
-
-    setUploading(true);
-
     try {
-      const data = await uploadToCloudinary(file);
-      setProjectImage(data.imageUrl);
+      setUploading(true);
+      const imageUrl = await uploadToCloudinary(file);
+      setProjectImage(imageUrl);
       alert("تم رفع الصورة الرئيسية");
     } catch (error) {
-      alert(error.message || "فشل رفع الصورة الرئيسية");
+      alert(error.message);
+    } finally {
+      setUploading(false);
     }
-
-    setUploading(false);
   };
 
   const uploadGalleryImages = async (files) => {
-    if (!files || files.length === 0) return alert("اختر صورًا إضافية");
-
-    setUploading(true);
+    if (!files || files.length === 0) {
+      alert("اختر صورًا إضافية");
+      return;
+    }
 
     try {
+      setUploading(true);
       const uploaded = [];
 
-      for (const file of files) {
-        const data = await uploadToCloudinary(file);
-        uploaded.push(data.imageUrl);
+      for (const file of Array.from(files)) {
+        const imageUrl = await uploadToCloudinary(file);
+        uploaded.push(imageUrl);
       }
 
       setProjectImages((prev) => [...prev, ...uploaded]);
       alert("تم رفع الصور الإضافية");
     } catch (error) {
-      alert(error.message || "فشل رفع الصور الإضافية");
+      alert(error.message);
+    } finally {
+      setUploading(false);
     }
-
-    setUploading(false);
   };
 
   const uploadServiceIcon = async (file) => {
-    if (!file) return alert("اختر صورة للأيقونة");
-
-    setServiceUploading(true);
-
     try {
-      const data = await uploadToCloudinary(file);
-      setServiceIcon(data.imageUrl);
+      setServiceUploading(true);
+      const imageUrl = await uploadToCloudinary(file);
+      setServiceIcon(imageUrl);
       alert("تم رفع أيقونة الخدمة");
     } catch (error) {
-      alert(error.message || "فشل رفع الأيقونة");
+      alert(error.message);
+    } finally {
+      setServiceUploading(false);
     }
-
-    setServiceUploading(false);
   };
 
   const resetServiceForm = () => {
@@ -158,7 +156,7 @@ export default function Admin() {
 
   const saveService = async () => {
     if (!serviceTitle || !serviceText || !serviceIcon) {
-      alert("املأ جميع حقول الخدمة وارفع أيقونة");
+      alert("املأ اسم الخدمة والوصف وارفع الأيقونة");
       return;
     }
 
@@ -170,8 +168,10 @@ export default function Admin() {
 
     if (serviceEditId) {
       await updateDoc(doc(db, "services", serviceEditId), data);
+      alert("تم تعديل الخدمة");
     } else {
       await addDoc(servicesRef, data);
+      alert("تم إضافة الخدمة");
     }
 
     resetServiceForm();
@@ -206,7 +206,7 @@ export default function Admin() {
 
   const saveProject = async () => {
     if (!projectTitle || !projectDescription || !projectImage) {
-      alert("أدخل اسم المشروع والوصف والصورة الرئيسية");
+      alert("أدخل اسم المشروع والوصف وارفع الصورة الرئيسية");
       return;
     }
 
@@ -223,13 +223,14 @@ export default function Admin() {
 
     if (projectEditId) {
       await updateDoc(doc(db, "projects", projectEditId), data);
+      alert("تم تعديل المشروع");
     } else {
       await addDoc(projectsRef, data);
+      alert("تم إضافة المشروع");
     }
 
     resetProjectForm();
     getProjects();
-    alert("تم حفظ المشروع بنجاح");
   };
 
   const editProject = (item) => {
@@ -334,7 +335,7 @@ export default function Admin() {
               type="file"
               accept="image/*"
               className="input"
-              onChange={(e) => uploadServiceIcon(e.target.files[0])}
+              onChange={(e) => uploadServiceIcon(e.target.files?.[0])}
             />
           </div>
 
@@ -404,7 +405,7 @@ export default function Admin() {
               type="file"
               accept="image/*"
               className="input"
-              onChange={(e) => uploadMainProjectImage(e.target.files[0])}
+              onChange={(e) => uploadMainProjectImage(e.target.files?.[0])}
             />
 
             <input
