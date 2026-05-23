@@ -154,29 +154,45 @@ export default function Admin() {
     setServiceEditId(null);
   };
 
-  const saveService = async () => {
-    if (!serviceTitle || !serviceText || !serviceIcon) {
-      alert("املأ اسم الخدمة والوصف وارفع الأيقونة");
+ const saveService = async () => {
+  try {
+    if (!serviceTitle.trim()) {
+      alert("اكتب اسم الخدمة");
+      return;
+    }
+
+    if (!serviceText.trim()) {
+      alert("اكتب وصف الخدمة");
+      return;
+    }
+
+    if (!serviceIcon) {
+      alert("ارفع أيقونة الخدمة أولًا");
       return;
     }
 
     const data = {
-      title: serviceTitle,
-      text: serviceText,
+      title: serviceTitle.trim(),
+      text: serviceText.trim(),
       icon: serviceIcon,
+      createdAt: new Date(),
     };
 
     if (serviceEditId) {
       await updateDoc(doc(db, "services", serviceEditId), data);
-      alert("تم تعديل الخدمة");
+      alert("تم تعديل الخدمة بنجاح");
     } else {
-      await addDoc(servicesRef, data);
-      alert("تم إضافة الخدمة");
+      await addDoc(collection(db, "services"), data);
+      alert("تم إضافة الخدمة بنجاح");
     }
 
     resetServiceForm();
-    getServices();
-  };
+    await getServices();
+  } catch (error) {
+    console.error("Save service error:", error);
+    alert("فشل حفظ الخدمة: " + error.message);
+  }
+};
 
   const editService = (item) => {
     setServiceEditId(item.id);
@@ -205,33 +221,49 @@ export default function Admin() {
   };
 
   const saveProject = async () => {
-    if (!projectTitle || !projectDescription || !projectImage) {
-      alert("أدخل اسم المشروع والوصف وارفع الصورة الرئيسية");
+  try {
+    if (!projectTitle.trim()) {
+      alert("اكتب اسم المشروع");
+      return;
+    }
+
+    if (!projectDescription.trim()) {
+      alert("اكتب وصف المشروع");
+      return;
+    }
+
+    if (!projectImage) {
+      alert("ارفع الصورة الرئيسية أولًا");
       return;
     }
 
     const data = {
-      title: projectTitle,
-      description: projectDescription,
+      title: projectTitle.trim(),
+      description: projectDescription.trim(),
       image: projectImage,
-      images: projectImages,
-      video: projectVideo,
-      demo: projectDemo,
-      tech: projectTech,
-      duration: projectDuration,
+      images: projectImages || [],
+      video: projectVideo.trim(),
+      demo: projectDemo.trim(),
+      tech: projectTech.trim(),
+      duration: projectDuration.trim(),
+      createdAt: new Date(),
     };
 
     if (projectEditId) {
       await updateDoc(doc(db, "projects", projectEditId), data);
-      alert("تم تعديل المشروع");
+      alert("تم تعديل المشروع بنجاح");
     } else {
-      await addDoc(projectsRef, data);
-      alert("تم إضافة المشروع");
+      await addDoc(collection(db, "projects"), data);
+      alert("تم إضافة المشروع بنجاح");
     }
 
     resetProjectForm();
-    getProjects();
-  };
+    await getProjects();
+  } catch (error) {
+    console.error("Save project error:", error);
+    alert("فشل حفظ المشروع: " + error.message);
+  }
+};
 
   const editProject = (item) => {
     setProjectEditId(item.id);
