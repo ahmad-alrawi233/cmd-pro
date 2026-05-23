@@ -12,7 +12,8 @@ import {
   orderBy,
 } from "firebase/firestore";
 
-const BACKEND_URL = "https://cmd-backend-v7zo.onrender.com";
+const CLOUD_NAME = "dkuvjee2o";
+const UPLOAD_PRESET = "cmd_upload";
 
 export default function Admin() {
   const [services, setServices] = useState([]);
@@ -68,34 +69,30 @@ export default function Admin() {
     getMessages();
   }, []);
 
-  const uploadToBackend = async (file) => {
+  const uploadToCloudinary = async (file) => {
     const formData = new FormData();
-    formData.append("image", file);
 
-    const res = await fetch(`${BACKEND_URL}/upload`, {
-      method: "POST",
-      body: formData,
-    });
+    formData.append("file", file);
+    formData.append("upload_preset", UPLOAD_PRESET);
+    formData.append("folder", "cmd-projects");
 
-    const text = await res.text();
+    const res = await fetch(
+      'https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload',
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
 
-    let data = {};
-
-    try {
-      data = text ? JSON.parse(text) : {};
-    } catch (err) {
-      throw new Error("السيرفر رجع رد غير صحيح");
-    }
+    const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.details || data.error || "فشل رفع الصورة");
+      throw new Error(data.error?.message || "فشل رفع الصورة");
     }
 
-    if (!data.imageUrl) {
-      throw new Error("لم يرجع رابط الصورة من السيرفر");
-    }
-
-    return data;
+    return {
+      imageUrl: data.secure_url,
+    };
   };
 
   const uploadMainProjectImage = async (file) => {
@@ -104,7 +101,7 @@ export default function Admin() {
     setUploading(true);
 
     try {
-      const data = await uploadToBackend(file);
+      const data = await uploadToCloudinary(file);
       setProjectImage(data.imageUrl);
       alert("تم رفع الصورة الرئيسية");
     } catch (error) {
@@ -123,7 +120,7 @@ export default function Admin() {
       const uploaded = [];
 
       for (const file of files) {
-        const data = await uploadToBackend(file);
+        const data = await uploadToCloudinary(file);
         uploaded.push(data.imageUrl);
       }
 
@@ -142,7 +139,7 @@ export default function Admin() {
     setServiceUploading(true);
 
     try {
-      const data = await uploadToBackend(file);
+      const data = await uploadToCloudinary(file);
       setServiceIcon(data.imageUrl);
       alert("تم رفع أيقونة الخدمة");
     } catch (error) {
@@ -232,6 +229,7 @@ export default function Admin() {
 
     resetProjectForm();
     getProjects();
+    alert("تم حفظ المشروع بنجاح");
   };
 
   const editProject = (item) => {
