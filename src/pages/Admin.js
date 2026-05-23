@@ -13,7 +13,7 @@ import {
 } from "firebase/firestore";
 
 const CLOUDINARY_CLOUD_NAME = "dkuvjee2o";
-const CLOUDINARY_UPLOAD_PRESET = "cmd_upload";
+const CLOUDINARY_UPLOAD_PRESET = "cmd_unsigned";
 
 export default function Admin() {
   const [services, setServices] = useState([]);
@@ -77,7 +77,7 @@ export default function Admin() {
     formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
     const res = await fetch(
-      'https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload',
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
       {
         method: "POST",
         body: formData,
